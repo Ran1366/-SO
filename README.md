@@ -7,9 +7,9 @@
 
 本项目是一个使用C++11编写的文件快速搜索器，用户可输入汉字，拼音或首字母，均能高亮显示搜索结果
 
-|Part I| Part II |Part III | Part IV|
-|--|--|--|--|
-| [文件扫描模块](https://github.com/Ran1366/-SO/blob/master/文件扫描.md) |  [数据管理模块](https://github.com/Ran1366/-SO/blob/master/数据管理.md)  |[逻辑层处理模块](https://github.com/Ran1366/-SO/blob/master/逻辑层处理.md)  |  [项目目的](https://github.com/Ran1366/-SO/blob/master/项目目的.md)|
+|Part I| Part II |Part III |
+|--|--|--|
+| [文件扫描模块](https://github.com/Ran1366/-SO/blob/master/文件扫描.md) |  [数据管理模块](https://github.com/Ran1366/-SO/blob/master/数据管理.md)  |[逻辑层处理模块](https://github.com/Ran1366/-SO/blob/master/逻辑层处理.md)  |  
 
 ## Environment：
 
