@@ -2,9 +2,9 @@
 
 
 ## Roket-SO
-------
+
 ## Introduction：
-----
+
 本项目是一个使用C++11编写的文件快速搜索器，用户可输入汉字，拼音或首字母，均能高亮显示搜索结果
 
 |Part I| Part II |Part III | Part IV|
@@ -12,12 +12,12 @@
 | [文件扫描模块](https://github.com/Ran1366/-SO/blob/master/ScanManage.md) |  [数据管理模块](https://github.com/Ran1366/-SO/blob/master/DataManager.md)  |[逻辑层处理模块](https://github.com/Ran1366/-SO/blob/master/LogicalProcess.md)  |  [项目目的](https://github.com/Ran1366/-SO/blob/master/Purpose.md)|
 
 ## Environment：
----
+
 OS：Microsoft Windows10
 Complier: Visual Studio 2015
 
 ## Technical points
----
+
  - 使用SQLite3，实现数据的可持久化
  - 使用SQLite3的事务特性，提高数据写入效率
  - 使用单例模式确保程序运行时，仅有一个扫描管理对象和一个数据管理对象
