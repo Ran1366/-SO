@@ -9,7 +9,7 @@
 
 |Part I| Part II |Part III | Part IV|
 |--|--|--|--|
-| [文件扫描模块](https://github.com/Ran1366/-SO/blob/master/ScanManage.md) |  [数据管理模块](https://github.com/Ran1366/-SO/blob/master/DataManager.md)  |[逻辑层处理模块](https://github.com/Ran1366/-SO/blob/master/LogicalProcess.md)  |  [项目目的](https://github.com/Ran1366/-SO/blob/master/Purpose.md)|
+| [文件扫描模块](https://github.com/Ran1366/-SO/blob/master/文件扫描.md) |  [数据管理模块](https://github.com/Ran1366/-SO/blob/master/数据管理.md)  |[逻辑层处理模块](https://github.com/Ran1366/-SO/blob/master/逻辑层处理.md)  |  [项目目的](https://github.com/Ran1366/-SO/blob/master/项目目的.md)|
 
 ## Environment：
 
