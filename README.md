@@ -15,7 +15,7 @@
 
 OS：Microsoft Windows10
 
-Complier: Visual Studio 2015
+IDE: Visual Studio 2015
 
 ## Technical points
 
