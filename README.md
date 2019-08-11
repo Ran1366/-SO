@@ -7,6 +7,10 @@
 
 本项目是一个使用C++11编写的文件快速搜索器，用户可输入汉字，拼音或首字母，均能高亮显示搜索结果
 
+|Part I| Part II |Part III |
+|--|--|--|
+| [文件扫描模块](https://github.com/Ran1366/-SO/blob/master/文件扫描.md) |  [数据管理模块](https://github.com/Ran1366/-SO/blob/master/数据管理.md)  |[逻辑层处理模块](https://github.com/Ran1366/-SO/blob/master/逻辑层处理.md)  |  
+
 ## 运行过程
 
 两个主要执行流：
@@ -19,9 +23,7 @@
 ### 用户交互过程：
 用户在运行窗口输入数据，数据处理模块拿到数据，先使用模糊匹配找到数据库中所有的匹配项，把所有匹配项放在一块存储空间中，逐个进行高亮分析，将分析的结果组织并输出到显示屏上
 
-|Part I| Part II |Part III |
-|--|--|--|
-| [文件扫描模块](https://github.com/Ran1366/-SO/blob/master/文件扫描.md) |  [数据管理模块](https://github.com/Ran1366/-SO/blob/master/数据管理.md)  |[逻辑层处理模块](https://github.com/Ran1366/-SO/blob/master/逻辑层处理.md)  |  
+
 
 ## Environment
 
