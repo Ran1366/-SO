@@ -4,9 +4,9 @@
 
 void DataManager::Init()
 {
-	//¼ÓËø(¿ÉÒÔ»»³ÉÀÁººÄ£Ê½£¬½â¾öÕâ¸öÏß³Ì°²È«ÎÊÌâ)
+	//åŠ é”(å¯ä»¥æ¢æˆæ‡’æ±‰æ¨¡å¼ï¼Œè§£å†³è¿™ä¸ªçº¿ç¨‹å®‰å…¨é—®é¢˜)
 	std::unique_lock<std::mutex> lock(_mtx);
-	// ´ò¿ªÊı¾İ¿â
+	// æ‰“å¼€æ•°æ®åº“
 	_dbmgr.Open(DOC_DB);
 	std::string createtb_sql = "create table if not exists tb_doc (id INTEGER PRIMARY KEY, doc_path text, doc_name text,doc_name_pinyin text, doc_name_initials text)";
 	
@@ -22,11 +22,11 @@ void DataManager::GetDocs(const std::string path, std::set<std::string>& docs)
 	int row;
 	int col;
 	char ** ppRet;
-	//¼ÓËø
+	//åŠ é”
 	std::unique_lock<std::mutex> lock(_mtx);
 	_dbmgr.GetTable(query_sql, row, col, ppRet);
 	//AutoGetTable agt(&_dbmgr, query_sql, row, col, ppRet);
-	//½âËø
+	//è§£é”
 	lock.unlock();
 
 	std::vector<std::string> tmp;
@@ -38,80 +38,110 @@ void DataManager::GetDocs(const std::string path, std::set<std::string>& docs)
 	}
 	sqlite3_free_table(ppRet);
 }
-int DataManager::InsertDoc(const std::string path, std::string doc)
+void DataManager::InsertDoc(const std::string path, std::string doc)
 {
 	//id INTEGER PRIMARY KEY, doc_path text, doc_name text,doc_name_pinyin text, doc_name_initials
 	//insert_sql = "insert into tb_doc(doc_path, doc_name) values('stl\', 'vector.h')";
-	char *insert_sql = (char*)malloc(MAXSQLLENGTH);
-	//create table if not exists tb_doc(id INTEGER PRIMARY KEY, doc_path text, doc_name text, doc_name_pinyin text, doc_name_initials£©)";
+	char insert_sql[1024];
+	//create table if not exists tb_doc(id INTEGER PRIMARY KEY, doc_path text, doc_name text, doc_name_pinyin text, doc_name_initialsï¼‰)";
 
 	std::string pinyin = ChineseConvertPinYinAllSpell(doc);
 	std::string initials = ChineseConvertPinYinInitials(doc);
 	sprintf(insert_sql, "insert into tb_doc(doc_path, doc_name, doc_name_pinyin,doc_name_initials) values('%s', '%s','%s','%s')",path.c_str(), doc.c_str(),pinyin.c_str(),initials.c_str());
 	//sprintf(insert_sql, "insert into tb_doc(doc_path, doc_name) values('%s', '%s')", path.c_str(), doc.c_str());
-	//¼ÓËø
 	std::unique_lock<std::mutex> lock(_mtx);
-	int ret = _dbmgr.ExecuteSql(insert_sql);
-	free(insert_sql);
-	return ret;
+	insertSql.push_back(insert_sql);
+	//cout << insertSql.size() << endl;
+	if (insertSql.size() >= 1000)
+	{
+		//std::unique_lock<std::mutex> lock(_mtx);
+		BeginTransaction();
+		for (int i = 0; i < insertSql.size(); ++i)
+		{
+			//cout << "inserting...  " << i << endl;
+			int ret = _dbmgr.ExecuteSql(insertSql[i]); 
+			if (ret != SQLITE_OK)
+			{
+				RollbackTransaction();
+			}
+		}
+		insertSql.clear();
+		CommitTransaction();
+	}
+	//è§£é”
+	lock.unlock();
 }
 void DataManager::BeginTransaction()
 {
-	//¿ªÊ¼Ò»¸öÊÂÎñ
+	//å¼€å§‹ä¸€ä¸ªäº‹åŠ¡
 	//sqlite3_exec(_db, "begin transaction", 0, 0, &zErrorMsg);
-	char *begin_sql = (char*)malloc(MAXSQLLENGTH);
+	char begin_sql[128];
 	sprintf(begin_sql, "begin transaction");
-	//¼ÓËø
-	std::unique_lock<std::mutex> lock(_mtx);
+	//åŠ é”
+	//std::unique_lock<std::mutex> lock(_mtx);
 	_dbmgr.ExecuteSql(begin_sql);
-	free(begin_sql);
 }
 void DataManager::CommitTransaction()
 {
-	//Ìá½»Ò»¸öÊÂÎñ
+	//æäº¤ä¸€ä¸ªäº‹åŠ¡
 	//sqlite3_exec(db, "commit transaction", 0, 0, &zErrorMsg);
-	char *commit_sql = (char*)malloc(MAXSQLLENGTH);
+	char commit_sql[128];
 	sprintf(commit_sql, "commit transaction");
-	//¼ÓËø
-	std::unique_lock<std::mutex> lock(_mtx);
+	//åŠ é”
+	//std::unique_lock<std::mutex> lock(_mtx);
 	_dbmgr.ExecuteSql(commit_sql);
-	free(commit_sql);
 }
 void DataManager::RollbackTransaction()
 {
-	//»Ø¹öÒ»¸öÊÂÎñ
-	//sqlite3_exec(db, ¡°rollback transaction¡±, 0, 0, &zErrorMsg)
-	char *rollback_sql = (char*)malloc(MAXSQLLENGTH);
+	//å›æ»šä¸€ä¸ªäº‹åŠ¡
+	//sqlite3_exec(db, â€œrollback transactionâ€, 0, 0, &zErrorMsg)
+	char rollback_sql[128];
 	sprintf(rollback_sql, "rollback transaction");
-	//¼ÓËø
-	std::unique_lock<std::mutex> lock(_mtx);
+	//åŠ é”
+	//std::unique_lock<std::mutex> lock(_mtx);
 	_dbmgr.ExecuteSql(rollback_sql);
-	free(rollback_sql);
 }
-int DataManager::DeleteDoc(const std::string path, std::string doc)
+void DataManager::DeleteDoc(const std::string path, std::string doc)
 {
 	//sql = "DELETE from tb_doc where doc_path = '%s', doc_name = '%s'";
-	char *delete_sql = (char*)malloc(MAXSQLLENGTH);
+	char delete_sql[1024];
 	sprintf(delete_sql, "DELETE from tb_doc where  doc_name = '%s'", doc.c_str());
-	int ret = _dbmgr.ExecuteSql(delete_sql);
-	free(delete_sql);
-	return ret;
+	//int ret = _dbmgr.ExecuteSql(delete_sql);
+	std::unique_lock<std::mutex> lock(_mtx);
+	deleteSql.push_back(delete_sql);
+	if (deleteSql.size() > 1000)
+	{
+		//std::unique_lock<std::mutex> lock(_mtx);
+		BeginTransaction();
+		for (int i = 0; i < deleteSql.size(); ++i)
+		{
+			int ret = _dbmgr.ExecuteSql(deleteSql[i]);
+			if (ret != SQLITE_OK)
+			{
+				RollbackTransaction();
+			}
+		}
+		deleteSql.clear();
+		CommitTransaction();
+	}
+	//std::unique_unlock<std::mutex> lock(_mtx);
+	lock.unlock();
 }
 void DataManager::Search(const std::string& key, std::vector<std::pair<std::string, std::string>>&
-	doc_paths)//Ê¹ÓÃlikeÄ£ºı²éÕÒ£¬ Ê¹ÓÃÆ´ÒôËÑË÷
+	doc_paths)//ä½¿ç”¨likeæ¨¡ç³ŠæŸ¥æ‰¾ï¼Œ ä½¿ç”¨æ‹¼éŸ³æœç´¢
 {
 	//sql = "SELECT * from tb_doc where doc_path = '%s'";
-	char *select_sql = (char*)malloc(MAXSQLLENGTH);
+	char select_sql[1024];
 	std::string pinyin = ChineseConvertPinYinAllSpell(key);
 	std::string initials = ChineseConvertPinYinInitials(key);
 	sprintf(select_sql, "SELECT * from tb_doc where doc_name_pinyin like '%%%s%%' or doc_name_initials like '%%%s%%'", pinyin.c_str(),initials.c_str());
 	int row;
 	int col;
 	char **ppRet;
-	//¼ÓËø
+	//åŠ é”
 	std::unique_lock<std::mutex> lock(_mtx);
-	_dbmgr.GetTable(select_sql, row, col, ppRet);
-	//AutoGetTable agt(&_dbmgr, select_sql, row, col, ppRet);
+	//_dbmgr.GetTable(select_sql, row, col, ppRet);
+	AutoGetTable agt(&_dbmgr, select_sql, row, col, ppRet);
 	//_mtx.unlock();
 	/*for (int i = 1; i <= row; ++i)
 	{
@@ -133,18 +163,16 @@ void DataManager::Search(const std::string& key, std::vector<std::pair<std::stri
 		tmp = std::make_pair(ppRet[i*col - 4], ppRet[i*col - 3]);
 		doc_paths.push_back(tmp);
 	}
-	sqlite3_free_table(ppRet);
-	free(select_sql);
 	cout << endl;
 }
 
 void DataManager::SplitHighlight(const std::string& str,  std::string& key,
 	std::string& prefix, std::string& highlight, std::string& suffix)
 {
-	//Ò»¸öGBKºº×ÖÒªÕ¼Á½¸öchar¿Õ¼ä(¶ş×Ö½Ú£©£¬¶øÇÒµÚÒ»¸ö×Ö½ÚÀïµÄÖµÊÇĞ¡ÓÚ0µÄ¡£
-	//¿ÉÒÔ¾İ´ËÅĞ¶ÏÊÇ·ñÎªºº×Ö
+	//ä¸€ä¸ªGBKæ±‰å­—è¦å ä¸¤ä¸ªcharç©ºé—´(äºŒå­—èŠ‚ï¼‰ï¼Œè€Œä¸”ç¬¬ä¸€ä¸ªå­—èŠ‚é‡Œçš„å€¼æ˜¯å°äº0çš„ã€‚
+	//å¯ä»¥æ®æ­¤åˆ¤æ–­æ˜¯å¦ä¸ºæ±‰å­—
 
-	//Çé¿öÒ»£ºÊäÈëÊ²Ã´¾Í¸ßÁÁÊ²Ã´(Èç¹ûÓĞ×ÖÄ¸£¬²»Çø·Ö´óĞ¡Ğ´£©
+	//æƒ…å†µä¸€ï¼šè¾“å…¥ä»€ä¹ˆå°±é«˜äº®ä»€ä¹ˆ(å¦‚æœæœ‰å­—æ¯ï¼Œä¸åŒºåˆ†å¤§å°å†™ï¼‰
 	{
 		std::string up_str = ToUpper(str);
 		std::string up_key = ToUpper(key);
@@ -157,7 +185,7 @@ void DataManager::SplitHighlight(const std::string& str,  std::string& key,
 		}
 	}
 
-	//Çé¿ö¶ş£ºÊäÈëµÄÊÇÆ´Òô£¬¸ßÁÁ¶ÔÓ¦ºº×Ö
+	//æƒ…å†µäºŒï¼šè¾“å…¥çš„æ˜¯æ‹¼éŸ³ï¼Œé«˜äº®å¯¹åº”æ±‰å­—
 	{
 		
 		std::string str_py = ChineseConvertPinYinAllSpell(str);
@@ -172,7 +200,7 @@ void DataManager::SplitHighlight(const std::string& str,  std::string& key,
 			size_t str_i = 0, py_i = 0;
 			while (py_i < key_start)
 			{
-				//Èç¹ûstrµÄ¿ªÍ·¾ÍÊÇÖĞÎÄ
+				//å¦‚æœstrçš„å¼€å¤´å°±æ˜¯ä¸­æ–‡
 				if (str[str_i] < 0)
 				{
 					char chinese[3] = { '\0' };
@@ -195,7 +223,7 @@ void DataManager::SplitHighlight(const std::string& str,  std::string& key,
 			size_t str_j = str_i, py_j = py_i;
 			while (py_j < key_end)
 			{
-				//Èç¹ûstr´ËÊ±ÊÇÖĞÎÄ
+				//å¦‚æœstræ­¤æ—¶æ˜¯ä¸­æ–‡
 				if (str[str_j] < 0)
 				{
 					char chinese[3] = { '\0' };
@@ -219,7 +247,7 @@ void DataManager::SplitHighlight(const std::string& str,  std::string& key,
 
 	}
 
-	//Çé¿öÈı£ºÊäÈëµÄÊÇÊ××ÖÄ¸£¬¸ßÁÁ¶ÔÓ¦ºº×Ö
+	//æƒ…å†µä¸‰ï¼šè¾“å…¥çš„æ˜¯é¦–å­—æ¯ï¼Œé«˜äº®å¯¹åº”æ±‰å­—
 	{
 
 		std::string str_init = ChineseConvertPinYinInitials(str);
@@ -234,7 +262,7 @@ void DataManager::SplitHighlight(const std::string& str,  std::string& key,
 			size_t str_i = 0, init_i = 0;
 			while (init_i < key_start)
 			{
-				//Èç¹ûstrµÄ¿ªÍ·¾ÍÊÇÖĞÎÄ
+				//å¦‚æœstrçš„å¼€å¤´å°±æ˜¯ä¸­æ–‡
 				if (str[str_i] < 0)
 				{
 					char chinese[3] = { '\0' };
@@ -257,7 +285,7 @@ void DataManager::SplitHighlight(const std::string& str,  std::string& key,
 			size_t str_j = str_i, init_j = init_i;
 			while (init_j < key_end)
 			{
-				//Èç¹ûstr´ËÊ±ÊÇÖĞÎÄ
+				//å¦‚æœstræ­¤æ—¶æ˜¯ä¸­æ–‡
 				if (str[str_j] < 0)
 				{
 					char chinese[3] = { '\0' };

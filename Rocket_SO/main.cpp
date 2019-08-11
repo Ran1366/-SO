@@ -20,12 +20,12 @@ void TestDirctoryList()
 	}
 }
 
-void TestSqlite()//to do ËùÓĞµÄ²åÈë²Ù×÷ºÍĞŞ¸Ä²Ù×÷¶¼Ìí¼ÓÆ´Òô
+void TestSqlite()//to do æ‰€æœ‰çš„æ’å…¥æ“ä½œå’Œä¿®æ”¹æ“ä½œéƒ½æ·»åŠ æ‹¼éŸ³
 {
 	SqliteManager sq;
 	sq.Open("docs.db");
 	//std::string createtb_sql = "create table if not exists tb_doc (id INTEGER PRIMARY KEY, path text, doc_name text)";
-	//doc_name_pinyin text, doc_name_initials£©
+	//doc_name_pinyin text, doc_name_initialsï¼‰
 	std::string createtb_sql = "create table if not exists tb_doc (id INTEGER PRIMARY KEY, doc_path text, doc_name text,doc_name_pinyin text, doc_name_initials text)";
 	sq.ExecuteSql(createtb_sql);
 
@@ -66,28 +66,34 @@ void TestSqlite()//to do ËùÓĞµÄ²åÈë²Ù×÷ºÍĞŞ¸Ä²Ù×÷¶¼Ìí¼ÓÆ´Òô
 
 void TestSearch()
 {
-	//Æô¶¯É¨ÃèÏß³Ì
-	ScanManager *inst = ScanManager::CreatInstance();
-	std::vector<std::string> localdirs;
-	std::vector<std::string> localfiles;
-	DirectoryList("E:\\VS2015", localdirs, localfiles);
-	int len = localdirs.size();
-	std::vector<std::thread> thd;
-	thd.resize(len);
-	for (auto& subdirs : localdirs)
-	{
-		std::string subpath = "E:\\VS2015";
-		subpath += '\\';
-		subpath += subdirs;
-		subdirs = subpath;
-	}
-	DataManager::GetInstance()->BeginTransaction();
-	for (int i = 0; i < len; ++i)
-	{
-		thd[i] = std::thread(&ScanManager::Scan, inst, localdirs[i]);
-		thd[i].detach();
-	}
-	
+	//å¯åŠ¨æ‰«æçº¿ç¨‹
+	ScanManager::CreatInstance()->StartScan();
+	//std::vector<std::string> localdirs;
+	//std::vector<std::string> localfiles;
+	//DirectoryList("E:\\VS2015", localdirs, localfiles);
+	//int len = localdirs.size();
+	//std::vector<std::thread> thd;
+	//thd.resize(len);
+	//for (auto& subdirs : localdirs)
+	//{
+	//	std::string subpath = "E:\\VS2015";
+	//	subpath += '\\';
+	//	subpath += subdirs;
+	//	subdirs = subpath;
+	//}
+	////DataManager::GetInstance()->BeginTransaction();
+	//for (int i = 0; i < len; ++i)
+	//{
+	//	thd[i] = std::thread(&ScanManager::Scan, inst, localdirs[i]);
+	//}
+	//cout << "æ‰«æä¸­ï¼Œè¯·è€å¿ƒç­‰å¾…..." << endl;
+	//for (int i = 0; i < len; ++i)
+	//{
+	//	thd[i].join();
+	//}
+	////å¦‚æœæ‰«æå®Œæˆåæœ‰éƒ¨åˆ†æ•°æ®æœªåŒæ­¥
+	//DataManager::GetInstance()->Aftermath();
+
 	DataManager::GetInstance()->Init();
 	std::vector<std::pair<std::string, std::string>> docinfos;
 	std::string key;
@@ -95,7 +101,7 @@ void TestSearch()
 	while (std::cin >> key)
 	{
 		DataManager::GetInstance()->Search(key, docinfos);
-		printf("%-50s %-50s\n", "Ãû³Æ", "Â·¾¶");
+		printf("%-50s %-50s\n", "åç§°", "è·¯å¾„");
 		std::string prefix = "";
 		std::string highlight = "";
 		std::string suffix = "";
@@ -121,8 +127,8 @@ void TestSearch()
 }
 void TestPinyin()
 {
-	std::string allspell = ChineseConvertPinYinAllSpell("Æ´Òô ÏîÄ¿²âÊÔ pinyin, test ÊÔÊÔ");
-	std::string initials = ChineseConvertPinYinAllSpell("Æ´Òô ÏîÄ¿²âÊÔ pinyin, test ÊÔÊÔ");
+	std::string allspell = ChineseConvertPinYinAllSpell("æ‹¼éŸ³ é¡¹ç›®æµ‹è¯• pinyin, test è¯•è¯•");
+	std::string initials = ChineseConvertPinYinAllSpell("æ‹¼éŸ³ é¡¹ç›®æµ‹è¯• pinyin, test è¯•è¯•");
 	cout << allspell << endl;
 	cout << initials << endl;
 }
@@ -152,10 +158,10 @@ void TestScanManager()
 void TestHighlight()
 {
 
-	// 1.keyÊÇÊ²Ã´ ¸ßÁÁkey
+	// 1.keyæ˜¯ä»€ä¹ˆ é«˜äº®key
 	{
-		std::string key = "ÏîÄ¿²âÊÔ";
-		std::string str = "ÕâÊÇÒ»´ÎÏîÄ¿²âÊÔ233";
+		std::string key = "é¡¹ç›®æµ‹è¯•";
+		std::string str = "è¿™æ˜¯ä¸€æ¬¡é¡¹ç›®æµ‹è¯•233";
 		size_t pos = str.find(key);
 		std::string prefix, suffix;
 		prefix = str.substr(0, pos);
@@ -165,10 +171,10 @@ void TestHighlight()
 		cout << suffix << endl;
 	}
 
-	// 2.keyÊÇÆ´Òô£¬¸ßÁÁ¶ÔÓ¦µÄºº×Ö
+	// 2.keyæ˜¯æ‹¼éŸ³ï¼Œé«˜äº®å¯¹åº”çš„æ±‰å­—
 	{
 		std::string key = "xiangmu";
-		std::string str = "ÕâÊÇÒ»´ÎÏîÄ¿²âÊÔ233";
+		std::string str = "è¿™æ˜¯ä¸€æ¬¡é¡¹ç›®æµ‹è¯•233";
 		std::string prefix, suffix;
 		std::string str_py = ChineseConvertPinYinAllSpell(str);
 		std::string key_py = ChineseConvertPinYinAllSpell(key);
@@ -176,7 +182,7 @@ void TestHighlight()
 
 		if (pos == std::string::npos)
 		{
-			cout << "Æ´Òô²»Æ¥Åä" << endl;
+			cout << "æ‹¼éŸ³ä¸åŒ¹é…" << endl;
 		}
 		else
 		{
@@ -219,17 +225,17 @@ void TestHighlight()
 
 	}
 
-	// 2.keyÊÇÆ´ÒôÊ××ÖÄ¸£¬¸ßÁÁ¶ÔÓ¦µÄºº×Ö
+	// 2.keyæ˜¯æ‹¼éŸ³é¦–å­—æ¯ï¼Œé«˜äº®å¯¹åº”çš„æ±‰å­—
 	{
 		std::string key = "xmcs";
-		std::string str = "ÕâÊÇÒ»´ÎÏîÄ¿²âÊÔ233";
+		std::string str = "è¿™æ˜¯ä¸€æ¬¡é¡¹ç›®æµ‹è¯•233";
 		std::string prefix, suffix;
 	}
 }
 
 void TestChinese()
 {
-	char a[10] = "CÓïÑÔ";
+	char a[10] = "Cè¯­è¨€";
 	int i;
 	for (i = 0; a[i]; i++)
 		if (a[i] < 0) {
@@ -241,7 +247,7 @@ void TestChinese()
 
 void TestToUpper()
 {
-	std::string str = "Ñ§Ï°stl¿âµÄÊ¹ÓÃ";
+	std::string str = "å­¦ä¹ stlåº“çš„ä½¿ç”¨";
 	std::string key = "STL";
 	std::string up_str = ToUpper(str);
 	std::string up_key = ToUpper(key);
@@ -258,16 +264,16 @@ void TestThings()
 {
 	//int ret;
 	//char *zErrorMsg;
-	//ret = sqlite3_exec(db, "begin transaction", 0, 0, &zErrorMsg); // ¿ªÊ¼Ò»¸öÊÂÎñ
-	//ret = sqlite3_exec(db, "commit transaction", 0, 0, &zErrorMsg); // Ìá½»ÊÂÎñ
+	//ret = sqlite3_exec(db, "begin transaction", 0, 0, &zErrorMsg); // å¼€å§‹ä¸€ä¸ªäº‹åŠ¡
+	//ret = sqlite3_exec(db, "commit transaction", 0, 0, &zErrorMsg); // æäº¤äº‹åŠ¡
 	//ret = sqlite3_exec(db, "begin transaction", 0, 0, &zErrorMsg);
-	//for (¡­)
+	//for (â€¦)
 	//{
 	//	//insert into operate
-	//	// Èç¹û²Ù×÷´íÎó
-	//	ret = sqlite3_exec(db, ¡°rollback transaction¡±, 0, 0, &zErrorMsg)
+	//	// å¦‚æœæ“ä½œé”™è¯¯
+	//	ret = sqlite3_exec(db, â€œrollback transactionâ€, 0, 0, &zErrorMsg)
 	//}
-	//ret = sqlite3_exec(db, ¡°commit transaction¡±, 0, 0, &zErrorMsg);
+	//ret = sqlite3_exec(db, â€œcommit transactionâ€, 0, 0, &zErrorMsg);
 }
 
 void Func(int &i)
@@ -309,8 +315,8 @@ void TestThreadPool()
 }
 int main()
 {
-	//utf-8¿ÉÒÔ×ª»»³ÉGBK£¬ÔÚlinuxÏÂÔËĞĞ²»Ö§³ÖÆ´ÒôËÑË÷
-	//sqliteÊÇÏß³Ì°²È«µÄ£¬Î´½â¾ö¶ÁĞ´Õ¼ÓÃÎÊÌâ£¬Ê¹ÓÃ¶ÁĞ´Ëø(sqliteÏß³Ì°²È«ÎÊÌâ£©
+	//utf-8å¯ä»¥è½¬æ¢æˆGBKï¼Œåœ¨linuxä¸‹è¿è¡Œä¸æ”¯æŒæ‹¼éŸ³æœç´¢
+	//sqliteæ˜¯çº¿ç¨‹å®‰å…¨çš„ï¼Œæœªè§£å†³è¯»å†™å ç”¨é—®é¢˜ï¼Œä½¿ç”¨è¯»å†™é”(sqliteçº¿ç¨‹å®‰å…¨é—®é¢˜ï¼‰
 	//TestDirctoryList();
 	//TestSqlite();
 	//TestDatamaneger();
