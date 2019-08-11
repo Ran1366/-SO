@@ -3,12 +3,12 @@
 #include "SqliteManager.h"
 #include <io.h>
 #include <set>
-//posix±ê×¼:Ê¹ÓÃÆäÖĞ_find...½Ó¿Ú,(ºÃ´¦ÊÇÔÚLinuxÏÂºÍwindowsÏÂ¶¼ÄÜÊ¹ÓÃ
-//¶¨ÒåÈçÏÂ:
+//posixæ ‡å‡†:ä½¿ç”¨å…¶ä¸­_find...æ¥å£,(å¥½å¤„æ˜¯åœ¨Linuxä¸‹å’Œwindowsä¸‹éƒ½èƒ½ä½¿ç”¨
+//å®šä¹‰å¦‚ä¸‹:
 //long _findfirst( char *filespec, struct _finddata_t *fileinfo );
 //int _findnext( long handle, struct _finddata_t *fileinfo ); 
 //int _findclose( long handle ); 
-//ÆäÖĞ_finddata_t½á¹¹Ìå¶¨ÒåÈçÏÂ:
+//å…¶ä¸­_finddata_tç»“æ„ä½“å®šä¹‰å¦‚ä¸‹:
 //struct _finddata64i32_t {
 //	unsigned    attrib;
 //	__time64_t  time_create;    /* -1 for FAT file systems */
@@ -54,7 +54,15 @@ static void DirectoryList(std::string path, std::vector<std::string> &subdirs,
 	}
 	do
 	{
-		if (file.attrib & _A_SUBDIR)
+		//#define _A_NORMAL 0x00 // Normal file - No read/write restrictions
+		//#define _A_RDONLY 0x01 // Read only file
+		//#define _A_HIDDEN 0x02 // Hidden file
+		//#define _A_SYSTEM 0x04 // System file
+		//#define _A_SUBDIR 0x10 // Subdirectory
+		//#define _A_ARCH   0x20 // Archive file
+		if ((file.attrib & _A_SUBDIR) && !(file.attrib & _A_RDONLY)
+			&& !(file.attrib & _A_HIDDEN) && !(file.attrib & _A_SYSTEM)
+			&& !(file.attrib & _A_ARCH))
 		{
 			if (strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
 			{
@@ -65,7 +73,7 @@ static void DirectoryList(std::string path, std::vector<std::string> &subdirs,
 				//DirectoryList(_path, subdirs, subfiles);
 			}
 		}
-		else
+		else if(!(file.attrib & _A_SUBDIR))
 		{
 			subfiles.push_back(file.name);
 		}
@@ -89,8 +97,8 @@ public:
 	}
 	void Init();
 	void GetDocs(const std::string path, std::set<std::string>& docs);
-	int InsertDoc(const std::string path, std::string doc);
-	int DeleteDoc(const std::string path, std::string doc);
+	void InsertDoc(const std::string path, std::string doc);
+	void DeleteDoc(const std::string path, std::string doc);
 	void Search(const std::string& key, std::vector<std::pair<std::string, std::string>>&
 		doc_paths);
 	void SplitHighlight(const std::string& str, std::string& key,
@@ -98,13 +106,49 @@ public:
 	void BeginTransaction();
 	void CommitTransaction();
 	void RollbackTransaction();
-	
+	void Aftermath()
+	{
+		if (!insertSql.empty())
+		{
+			BeginTransaction();
+			for (int i = 0; i < insertSql.size(); ++i)
+			{
+				//cout << "inserting...  " << i << endl;
+				int ret = _dbmgr.ExecuteSql(insertSql[i]);
+				if (ret != SQLITE_OK)
+				{
+					RollbackTransaction();
+				}
+			}
+			insertSql.clear();
+			CommitTransaction();
+		}
+		if (!deleteSql.empty())
+		{
+			BeginTransaction();
+			for (int i = 0; i < deleteSql.size(); ++i)
+			{
+				//cout << "inserting...  " << i << endl;
+				int ret = _dbmgr.ExecuteSql(deleteSql[i]);
+				if (ret != SQLITE_OK)
+				{
+					RollbackTransaction();
+				}
+			}
+			deleteSql.clear();
+			CommitTransaction();
+		}
+	}
 private:
 	DataManager()
 	{
+		insertSql.reserve(1000);
+		deleteSql.reserve(1000);
 	}
 	DataManager(const DataManager&) = delete;
 	DataManager operator=(const DataManager&) = delete;
+	std::vector<std::string> insertSql;
+	std::vector<std::string> deleteSql;
 	SqliteManager _dbmgr;
 	std::mutex _mtx;
 };
